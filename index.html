@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Retirement Plan Checkup: scoring prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F3F0; --surface:#FFFFFF; --text:#1F1D54; --muted:#5B5A6B; --line:#E0E0E0;
+  --accent:#165F94; --selected:#D7F5EA; --track:#ECE7E2; --answer:#1F1D54; --bonus:#165F94;
+  --win:#D7F5EA; --bonus-light:#9DC3DF;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A091A; --surface:#1B1936; --text:#F7F3F0; --muted:#C9C9C9; --line:#2E2B52;
+    --accent:#7FB6E0; --selected:#17344A; --track:#2A2748; --answer:#D7F5EA; --bonus:#7FB6E0;
+    --win:#17344A; --bonus-light:#3C6588;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A091A; --surface:#1B1936; --text:#F7F3F0; --muted:#C9C9C9; --line:#2E2B52;
+  --accent:#7FB6E0; --selected:#17344A; --track:#2A2748; --answer:#D7F5EA; --bonus:#7FB6E0;
+  --win:#17344A; --bonus-light:#3C6588;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1rem;line-height:1.55}
+h1,h2,h3{font-family:"Literata",Georgia,"Times New Roman",serif;font-weight:600;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+header{max-width:68ch;margin-bottom:2rem}
+h1{font-size:clamp(1.9rem,4.2vw,2.8rem);line-height:1.12;margin-bottom:.75rem}
+.lede{font-size:1.08rem;margin:0 0 1rem}
+.draft{font-size:.9rem;color:var(--muted);border-left:3px solid var(--accent);padding:.15rem 0 .15rem .8rem;margin:0}
+
+.controls{display:flex;flex-wrap:wrap;gap:1.5rem 2.5rem;align-items:flex-start;margin-bottom:2.5rem;padding-bottom:1.75rem;border-bottom:1px solid var(--line)}
+.control h2{font-family:"Nunito",sans-serif;font-size:.95rem;font-weight:700;margin-bottom:.5rem}
+.seg{display:inline-flex;border:1px solid var(--accent);border-radius:999px;overflow:hidden}
+.seg button{font:inherit;font-weight:700;border:0;background:transparent;color:var(--accent);padding:.45rem 1.1rem;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.weight-note{font-size:.88rem;color:var(--muted);margin:.5rem 0 0;max-width:34ch}
+.examples{display:flex;flex-wrap:wrap;gap:.5rem;max-width:640px}
+.examples button{font:inherit;font-size:.92rem;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:8px;padding:.45rem .8rem;cursor:pointer}
+.examples button:hover{border-color:var(--accent)}
+.examples button.clear{background:transparent;color:var(--muted)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:2.5rem}
+@media (min-width:960px){
+  .layout{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:start}
+  .panel{position:sticky;top:calc(env(safe-area-inset-top,0px) + 1.25rem)}
+}
+
+fieldset.q{border:0;margin:0 0 2.25rem;padding:0;min-width:0}
+legend{padding:0;display:grid;grid-template-columns:2.25rem 1fr;gap:.25rem;font-weight:600;font-size:1.05rem;line-height:1.45}
+legend .n{font-family:"Literata",Georgia,serif;font-size:1.6rem;line-height:1;color:var(--accent)}
+.measures{grid-column:2;font-weight:400;font-size:.88rem;color:var(--muted);margin-top:.15rem}
+.q.weighted legend .measures{color:var(--accent);font-weight:600}
+.opts{margin-left:2.25rem}
+.opt{display:grid;grid-template-columns:auto 1fr auto;gap:.75rem;align-items:start;padding:.65rem .9rem;margin-top:.5rem;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent);background:var(--selected)}
+.opt input{appearance:none;-webkit-appearance:none;width:1.1rem;height:1.1rem;margin:.2rem 0 0;border:2px solid var(--muted);border-radius:50%;display:grid;place-content:center;cursor:pointer}
+.opt input:checked{border-color:var(--accent)}
+.opt input:checked::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:var(--accent)}
+.opt input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opt .pts{font-size:.8rem;color:var(--muted);white-space:nowrap;padding-top:.15rem}
+@media (max-width:520px){
+  .opts{margin-left:0}
+  .opt{grid-template-columns:auto 1fr}
+  .opt .pts{grid-column:2;padding-top:0}
+}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.5rem}
+.panel h2{font-size:1.25rem;margin-bottom:.35rem}
+.panel .sub{font-size:.9rem;color:var(--muted);margin:0 0 1rem}
+.row{display:grid;grid-template-columns:7.5rem 1fr 2rem;gap:.75rem;align-items:center;padding:.5rem .6rem;border-radius:8px}
+.row.win{background:var(--win)}
+.row .label{font-weight:700;font-size:.95rem;line-height:1.2}
+.row .label small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.track{height:.9rem;background:var(--track);border-radius:999px;display:flex;overflow:hidden}
+.seg-a{background:var(--answer);transition:width .3s ease}
+.seg-b{background:repeating-linear-gradient(135deg,var(--bonus) 0 5px,var(--bonus-light) 5px 9px);transition:width .3s ease}
+.total{font-family:"Literata",Georgia,serif;font-weight:600;font-size:1.15rem;text-align:right}
+.key{display:flex;gap:1.25rem;font-size:.82rem;color:var(--muted);margin:.75rem 0 0 .6rem}
+.key span{display:inline-flex;align-items:center;gap:.4rem}
+.sw{width:.9rem;height:.6rem;border-radius:2px;display:inline-block}
+.sw.a{background:var(--answer)}
+.sw.b{background:repeating-linear-gradient(135deg,var(--bonus) 0 3px,var(--bonus-light) 3px 6px)}
+.why{margin:1.25rem 0 0;padding-top:1.1rem;border-top:1px solid var(--line);font-size:.98rem}
+.result{margin-top:1.25rem;padding:1.25rem;border-radius:12px;border:2px solid var(--accent)}
+.result.empty{border-style:dashed;border-color:var(--line);color:var(--muted)}
+.result .tag{font-size:.85rem;color:var(--muted);margin:0 0 .3rem}
+.result h3{font-size:1.4rem;line-height:1.25;margin-bottom:.5rem}
+.result blockquote{margin:0 0 .9rem;font-family:"Literata",Georgia,serif;font-style:italic;line-height:1.6}
+.result ul{margin:.25rem 0 0;padding-left:1.1rem}
+.result .resources{font-weight:700;font-size:.92rem;margin:0}
+.result .pending{font-size:.82rem;color:var(--muted);margin:.9rem 0 0}
+
+details{margin-top:1rem;border-top:1px solid var(--line);padding-top:1.5rem}
+summary{cursor:pointer;font-weight:700}
+summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tablewrap{overflow-x:auto;margin-top:1rem}
+table{border-collapse:collapse;font-size:.9rem;min-width:520px}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line)}
+th{font-weight:700}
+td.c{text-align:center}
+.rules{max-width:68ch;font-size:.95rem}
+.rules li{margin-bottom:.35rem}
+
+@media (prefers-reduced-motion: reduce){.seg-a,.seg-b{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>2-Minute Retirement Plan Checkup</h1>
+    <p class="lede">Scoring prototype with Question 6 as the weighted validation question. Pick answers or load an example to see which result a participant gets, and why.</p>
+    <p class="draft">Internal draft for Roar review. Questions and results are the client’s; result copy and visual design are placeholders.</p>
+  </header>
+
+  <section class="controls" aria-label="Prototype controls">
+    <div class="control">
+      <h2>Question 6 weight</h2>
+      <div class="seg" role="group" aria-label="Question 6 weight">
+        <button type="button" data-w="2" aria-pressed="true">2x</button>
+        <button type="button" data-w="3" aria-pressed="false">3x</button>
+      </div>
+      <p class="weight-note" id="weightNote"></p>
+    </div>
+    <div class="control">
+      <h2>Load an example</h2>
+      <div class="examples" id="examples"></div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <form id="quiz" onsubmit="return false"></form>
+
+    <aside class="panel" aria-labelledby="panelTitle">
+      <h2 id="panelTitle">How this participant scores</h2>
+      <p class="sub">Highest total wins. Question 6 adds its bonus to the concern they picked.</p>
+      <div id="bars"></div>
+      <div class="key"><span><i class="sw a"></i>From answers</span><span><i class="sw b"></i>Question 6 bonus</span></div>
+      <p class="why" id="why" aria-live="polite"></p>
+      <div id="result" aria-live="polite"></div>
+    </aside>
+  </div>
+
+  <details>
+    <summary>How points are assigned</summary>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Question</th><th>Counts toward</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Risk and Cost</td><td class="c">0</td><td class="c">1</td><td class="c">2</td><td class="c">3</td><td class="c">–</td></tr>
+          <tr><td>2</td><td>Risk</td><td class="c">0</td><td class="c">1</td><td class="c">2</td><td class="c">3</td><td class="c">–</td></tr>
+          <tr><td>3</td><td>Cost</td><td class="c">0</td><td class="c">1</td><td class="c">2</td><td class="c">3</td><td class="c">–</td></tr>
+          <tr><td>4</td><td>People</td><td class="c">0</td><td class="c">2</td><td class="c">4</td><td class="c">6</td><td class="c">6</td></tr>
+          <tr><td>4</td><td>Time (C and D only)</td><td class="c">–</td><td class="c">–</td><td class="c">2</td><td class="c">3</td><td class="c">–</td></tr>
+          <tr><td>5</td><td>Time</td><td class="c">0</td><td class="c">1</td><td class="c">2</td><td class="c">3</td><td class="c">3</td></tr>
+          <tr><td>6</td><td>The concern picked</td><td class="c" colspan="4">+4 at 2x, +6 at 3x</td><td class="c">0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="rules">
+      <li>Each concern can earn up to 6 points from Questions 1–5. Question 4 counts double for People because it’s the only People question.</li>
+      <li>A Question 6 pick is treated like a “C” answer (2 points), then weighted: 2x adds 4 points, 3x adds 6.</li>
+      <li>If the Question 6 concern ties with another, the Question 6 concern wins. Other ties follow the order Risk, Cost, People, Time.</li>
+      <li>“Your Plan Looks Healthy” shows only when Question 6 is “None of these” and every answer to Questions 1–5 is an A or B. Otherwise the highest-scoring concern wins.</li>
+    </ul>
+  </details>
+</div>
+
+<script>
+const ORDER = ["R","C","P","T"];
+const CONCERNS = {
+  R:{name:"Risk", area:"Fiduciary & Liability", quote:"“Are we actually doing what we’re supposed to be doing?”", resources:["Plan administration calendar","Annual notices link","Fiduciary Checklist"]},
+  C:{name:"Cost", area:"Cost & Competitiveness", quote:"“I don’t actually know whether we’re paying too much.”", resources:["Schedule time with DORP"]},
+  P:{name:"People", area:"Employee Experience", quote:"“Are our employees and owners actually getting value from this benefit?”", resources:["Employee Advantage links page"]},
+  T:{name:"Time", area:"Administration & Organization", quote:"“Why is managing this plan harder than it should be?”", resources:["Corporate Advantage page","Schedule time with DORP"]}
+};
+const HEALTHY = {title:"Your Plan Looks Healthy — Let’s Verify It.", resources:["Schedule time with DORP"]};
+
+const QUESTIONS = [
+  {n:1, measures:"Measures Risk and Cost", text:"When was the last time your company conducted a comprehensive review of your retirement plan—including fees, investments, plan design, and providers?",
+   opts:[["A","Within the last 12 months",{}],["B","Within the last 2–3 years",{R:1,C:1}],["C","More than 3 years ago",{R:2,C:2}],["D","I honestly don’t know",{R:3,C:3}]]},
+  {n:2, measures:"Measures Risk", text:"If the Department of Labor asked you tomorrow to demonstrate how you monitor your retirement plan, how prepared would you feel?",
+   opts:[["A","Very prepared—we have a documented process",{}],["B","Probably prepared, but I’d need help gathering everything",{R:1}],["C","I’m not sure what they would expect to see",{R:2}],["D","Not prepared",{R:3}]]},
+  {n:3, measures:"Measures Cost", text:"How confident are you that you understand what your company and employees are actually paying for the retirement plan—and that those costs are competitive?",
+   opts:[["A","Very confident—we review and benchmark fees regularly",{}],["B","Somewhat confident",{C:1}],["C","I’m not really sure what the total cost is",{C:2}],["D","I suspect we may be paying more than we should",{C:3}]]},
+  {n:4, measures:"Measures People (C and D also count toward Time)", text:"When employees have questions about their 401(k), investments, or retirement planning, what typically happens?",
+   opts:[["A","They have access to a dedicated advisor/resource who helps them",{}],["B","They generally contact the retirement plan provider",{P:2}],["C","HR/payroll/management ends up answering many of the questions",{P:4,T:2}],["D","I’m not sure employees know who to contact",{P:6,T:3}],["E","Employees rarely engage with the plan at all",{P:6}]]},
+  {n:5, measures:"Measures Time", text:"How would you describe the experience of managing your company’s retirement plan?",
+   opts:[["A","Very easy—our providers coordinate most of the heavy lifting",{}],["B","Generally manageable, with occasional issues",{T:1}],["C","More time-consuming than it should be",{T:2}],["D","We’re constantly coordinating providers, paperwork, payroll, or employee questions",{T:3}],["E","Sometimes figuring out who to call is half the battle",{T:3}]]},
+  {n:6, weighted:true, measures:"Weighted validation question", text:"Which statement best describes your biggest uncertainty about your retirement plan today?",
+   opts:[["A","Risk: I’m not completely confident we’re meeting all of our fiduciary responsibilities.","R"],["B","Cost: I don’t know if we’re paying a competitive price for what we’re getting.","C"],["C","People: I’m not sure employees—or the owners—are getting enough value or support from the plan.","P"],["D","Time: Managing and coordinating the plan takes more work than it should.","T"],["E","None of these: I feel pretty good about our plan; I’d just like to know how it stacks up.",null]]}
+];
+
+const EXAMPLES = [
+  {label:"Question 6 holds: Cost", sel:{1:"A",2:"A",3:"A",4:"A",5:"B",6:"B"}},
+  {label:"Answers outweigh Question 6", sel:{1:"D",2:"D",3:"A",4:"A",5:"A",6:"D"}},
+  {label:"Close call: People", sel:{1:"C",2:"C",3:"A",4:"B",5:"A",6:"C"}},
+  {label:"Healthy plan", sel:{1:"A",2:"B",3:"A",4:"A",5:"B",6:"E"}},
+  {label:"“None of these,” with a gap", sel:{1:"C",2:"A",3:"A",4:"A",5:"A",6:"E"}}
+];
+
+const state = {sel:{}, w:2};
+const bonus = () => state.w * 2;
+
+function ptsLabel(q, o){
+  if(q.weighted){ return o[2] ? `+${bonus()} to ${CONCERNS[o[2]].name}` : "No bonus"; }
+  const parts = ORDER.filter(k => o[2][k]).map(k => `${CONCERNS[k].name} +${o[2][k]}`);
+  return parts.length ? parts.join(", ") : "0 points";
+}
+
+function buildQuiz(){
+  const form = document.getElementById("quiz");
+  form.innerHTML = QUESTIONS.map(q => `
+    <fieldset class="q${q.weighted ? " weighted" : ""}">
+      <legend><span class="n">${q.n}</span><span>${q.text}</span><span class="measures">${q.measures}</span></legend>
+      <div class="opts">
+        ${q.opts.map(o => `
+          <label class="opt">
+            <input type="radio" name="q${q.n}" value="${o[0]}">
+            <span>${o[0]}. ${o[1]}</span>
+            <span class="pts" data-q="${q.n}" data-o="${o[0]}">${ptsLabel(q,o)}</span>
+          </label>`).join("")}
+      </div>
+    </fieldset>`).join("");
+  form.addEventListener("change", e => {
+    const n = e.target.name.slice(1);
+    state.sel[n] = e.target.value;
+    render();
+  });
+}
+
+function buildExamples(){
+  const box = document.getElementById("examples");
+  EXAMPLES.forEach(ex => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = ex.label;
+    b.addEventListener("click", () => { state.sel = {...ex.sel}; syncRadios(); render(); });
+    box.appendChild(b);
+  });
+  const c = document.createElement("button");
+  c.type = "button"; c.className = "clear"; c.textContent = "Clear answers";
+  c.addEventListener("click", () => { state.sel = {}; syncRadios(); render(); });
+  box.appendChild(c);
+}
+
+function syncRadios(){
+  document.querySelectorAll("#quiz input").forEach(i => {
+    i.checked = state.sel[i.name.slice(1)] === i.value;
+  });
+}
+
+document.querySelectorAll(".seg button").forEach(b => {
+  b.addEventListener("click", () => {
+    state.w = Number(b.dataset.w);
+    document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    const q6 = QUESTIONS[5];
+    document.querySelectorAll('.pts[data-q="6"]').forEach(s => {
+      const o = q6.opts.find(x => x[0] === s.dataset.o);
+      s.textContent = ptsLabel(q6, o);
+    });
+    render();
+  });
+});
+
+function compute(){
+  const ans = {R:0,C:0,P:0,T:0}, bon = {R:0,C:0,P:0,T:0};
+  QUESTIONS.slice(0,5).forEach(q => {
+    const s = state.sel[q.n]; if(!s) return;
+    const o = q.opts.find(x => x[0] === s);
+    ORDER.forEach(k => ans[k] += (o[2][k] || 0));
+  });
+  let pick;
+  const s6 = state.sel[6];
+  if(s6){ pick = QUESTIONS[5].opts.find(x => x[0] === s6)[2]; if(pick) bon[pick] = bonus(); }
+  const tot = {}; ORDER.forEach(k => tot[k] = ans[k] + bon[k]);
+  const complete = QUESTIONS.every(q => state.sel[q.n]);
+  return {ans, bon, tot, pick, s6, complete};
+}
+
+const list = arr => arr.length < 2 ? arr.join("") : arr.slice(0,-1).join(", ") + " and " + arr[arr.length-1];
+const nm = k => CONCERNS[k].name;
+
+function decide(c){
+  const {tot, ans, pick, s6, complete} = c;
+  if(!complete) return {key:null, why:"Answer all six questions to see the result. The bars update as you go."};
+  if(s6 === "E"){
+    const strong = [1,2,3,4,5].every(n => ["A","B"].includes(state.sel[n]));
+    if(strong) return {key:"H", why:"They chose “None of these” and every answer to Questions 1–5 is an A or B, so they see the healthy result."};
+    const max = Math.max(...ORDER.map(k => ans[k]));
+    const top = ORDER.filter(k => ans[k] === max);
+    let why = `They chose “None of these,” but at least one answer is a C, D or E. Their highest-scoring area is ${nm(top[0])} at ${max} points.`;
+    if(top.length > 1) why += ` ${list(top.map(nm))} tie, and ties follow the order Risk, Cost, People, Time.`;
+    return {key:top[0], why};
+  }
+  const max = Math.max(...ORDER.map(k => tot[k]));
+  const top = ORDER.filter(k => tot[k] === max);
+  const b = bonus();
+  if(top.includes(pick)){
+    const others = top.filter(k => k !== pick);
+    if(others.length) return {key:pick, why:`${list([pick,...others].map(nm))} tie at ${max} points. Ties go to the Question 6 pick, so ${nm(pick)} wins.`};
+    const rest = ORDER.filter(k => k !== pick).sort((a,z) => tot[z] - tot[a] || ORDER.indexOf(a) - ORDER.indexOf(z));
+    const r = rest[0];
+    const tail = tot[r] > 0 ? ` The next highest is ${nm(r)} at ${tot[r]}.` : "";
+    return {key:pick, why:`They picked ${nm(pick)} in Question 6 (+${b}), and ${nm(pick)} leads with ${max} points.${tail}`};
+  }
+  const w = top[0];
+  let why = `They picked ${nm(pick)} in Question 6 (+${b}), but their answers give ${nm(w)} ${tot[w]} points against ${nm(pick)}’s ${tot[pick]}. The answers point to a bigger gap in ${nm(w)}, so ${nm(w)} wins.`;
+  if(top.length > 1) why += ` ${list(top.map(nm))} tie, and ties follow the order Risk, Cost, People, Time.`;
+  return {key:w, why};
+}
+
+function render(){
+  const c = compute();
+  const d = decide(c);
+  const scale = 6 + 6; // fixed scale so the bonus visibly grows at 3x
+  document.getElementById("bars").innerHTML = ORDER.map(k => `
+    <div class="row${d.key === k ? " win" : ""}">
+      <span class="label">${CONCERNS[k].name}<small>${CONCERNS[k].area}</small></span>
+      <span class="track" role="img" aria-label="${CONCERNS[k].name}: ${c.ans[k]} from answers, ${c.bon[k]} from Question 6">
+        <span class="seg-a" style="width:${c.ans[k]/scale*100}%"></span>
+        <span class="seg-b" style="width:${c.bon[k]/scale*100}%"></span>
+      </span>
+      <span class="total">${c.tot[k]}</span>
+    </div>`).join("");
+  document.getElementById("why").textContent = d.why;
+
+  const res = document.getElementById("result");
+  if(!d.key){
+    res.className = "result empty";
+    res.innerHTML = `<p style="margin:0">The result appears here once all six questions are answered.</p>`;
+  } else if(d.key === "H"){
+    res.className = "result";
+    res.innerHTML = `<p class="tag">Result shown</p><h3>${HEALTHY.title}</h3>
+      <p class="resources">Next step</p><ul>${HEALTHY.resources.map(r => `<li>${r}</li>`).join("")}</ul>
+      <p class="pending">Result description to come.</p>`;
+  } else {
+    const k = CONCERNS[d.key];
+    res.className = "result";
+    res.innerHTML = `<p class="tag">Result shown: ${k.name}</p><h3>${k.area}</h3>
+      <blockquote>${k.quote}</blockquote>
+      <p class="resources">Resources</p><ul>${k.resources.map(r => `<li>${r}</li>`).join("")}</ul>
+      <p class="pending">Final title and description to come.</p>`;
+  }
+
+  document.getElementById("weightNote").textContent = state.w === 2
+    ? "Question 6 adds 4 points. It usually wins, but answers showing a bigger gap elsewhere can outweigh it."
+    : "Question 6 adds 6 points. No concern can earn more than 6 from answers, and ties go to Question 6, so it always wins.";
+}
+
+buildQuiz();
+buildExamples();
+render();
+</script>
+</body>
+</html>
